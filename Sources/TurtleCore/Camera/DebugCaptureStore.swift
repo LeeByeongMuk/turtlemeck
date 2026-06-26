@@ -41,10 +41,11 @@ final class DebugCaptureStore: @unchecked Sendable {
         }
     }
 
-    func writeFrameAnalysis(index: Int, time: Double, frame: AnalyzedFrame) {
+    func writeFrameAnalysis(index: Int, time: Double, frame: AnalyzedFrame, algorithm: PostureAlgorithmID?) {
         let report = DebugFrameReport(
             frame: index,
             time: time,
+            algorithm: algorithm,
             assessment: frame.assessment,
             signalKind: frame.signal?.kind,
             value: frame.signal?.angleDegrees,
@@ -68,7 +69,8 @@ final class DebugCaptureStore: @unchecked Sendable {
         let report = DebugRunReport(
             createdAt: ISO8601DateFormatter().string(from: Date()),
             mode: mode,
-            algorithm: settings.postureAlgorithm,
+            configuredAlgorithm: settings.postureAlgorithm,
+            algorithm: diagnostic?.algorithm ?? settings.postureAlgorithm,
             sensitivity: settings.sensitivity,
             baseline: baseline,
             verdict: verdict?.assessment,
@@ -78,6 +80,7 @@ final class DebugCaptureStore: @unchecked Sendable {
                 DebugFrameReport(
                     frame: item.index ?? (offset + 1),
                     time: item.time,
+                    algorithm: item.algorithm,
                     assessment: item.frame.assessment,
                     signalKind: item.frame.signal?.kind,
                     value: item.frame.signal?.angleDegrees,
@@ -150,6 +153,7 @@ final class DebugCaptureStore: @unchecked Sendable {
 private struct DebugRunReport: Codable {
     var createdAt: String
     var mode: String
+    var configuredAlgorithm: PostureAlgorithmID
     var algorithm: PostureAlgorithmID
     var sensitivity: Sensitivity
     var baseline: Baseline?
@@ -162,6 +166,7 @@ private struct DebugRunReport: Codable {
 private struct DebugFrameReport: Codable {
     var frame: Int
     var time: Double
+    var algorithm: PostureAlgorithmID?
     var assessment: PostureAssessment
     var signalKind: SignalKind?
     var value: Double?

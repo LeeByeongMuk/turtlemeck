@@ -261,9 +261,10 @@ public final class CameraManager: NSObject, @unchecked Sendable, AVCaptureVideoD
 
         if let completion = calibrationCompletion {
             calibrationCompletion = nil
-            // 보정도 동일한 2초 버스트를 사용하되, 최종 판정 대신 Calibrator로 baseline만 만든다.
-            // 라우팅된(effective) 방식 기준으로 baseline을 요구해, 이동 후 재보정 시 올바른 시점의 baseline을 잡는다.
-            let result = Calibrator().capture(from: frames.map(\.frame), requiredAlgorithm: effectiveAlgorithm())
+            // 보정도 동일한 버스트를 사용하되, 최종 판정 대신 Calibrator로 baseline만 만든다.
+            // 종료 시점에 다음 라우팅으로 갱신될 수 있으므로, 실제 프레임 처리에 사용된 방식 기준으로 baseline을 요구한다.
+            let calibrationAlgorithm = frames.last(where: { $0.algorithm != nil })?.algorithm ?? effectiveAlgorithm()
+            let result = Calibrator().capture(from: frames.map(\.frame), requiredAlgorithm: calibrationAlgorithm)
             if settings.debugEnabled {
                 var diagnostic = makeDiagnostic(assessment: .noEval, reason: "보정 \(calibrationLabel(result))", frames: frames)
                 diagnostic.debugArtifactPath = debugCaptureStore.writeFinalAnalysis(
@@ -311,14 +312,15 @@ public final class CameraManager: NSObject, @unchecked Sendable, AVCaptureVideoD
 
     private func makeDiagnostic(assessment: PostureAssessment, reason: String? = nil, frames: [TimedFrame]) -> PostureDiagnostic {
         // 신호가 있는 가장 최근 프레임을 대표로 삼아 현재 측정값을 보여준다.
+        let representativeItem = frames.last(where: { $0.frame.signal != nil }) ?? frames.last
+        let representative = representativeItem?.frame
         let analyzedFrames = frames.map(\.frame)
-        let representative = analyzedFrames.last(where: { $0.signal != nil }) ?? analyzedFrames.last
         var observedSignalKinds: [SignalKind] = []
         for kind in analyzedFrames.compactMap({ $0.signal?.kind }) where !observedSignalKinds.contains(kind) {
             observedSignalKinds.append(kind)
         }
         return PostureDiagnostic(
-            algorithm: settings.postureAlgorithm,
+            algorithm: representativeItem?.algorithm ?? settings.postureAlgorithm,
             assessment: assessment,
             signalKind: representative?.signal?.kind,
             value: representative?.signal?.angleDegrees,
@@ -526,9 +528,9 @@ public final class CameraManager: NSObject, @unchecked Sendable, AVCaptureVideoD
                 timestamp: snapshot.timestamp,
                 algorithmOverride: snapshot.effectiveAlgorithm
             )
-            self.burstFrames.append(TimedFrame(time: snapshot.timestamp, frame: frame, index: snapshot.frameIndex))
+            self.burstFrames.append(TimedFrame(time: snapshot.timestamp, frame: frame, index: snapshot.frameIndex, algorithm: snapshot.effectiveAlgorithm))
             if snapshot.settings.debugEnabled {
-                self.debugCaptureStore.writeFrameAnalysis(index: snapshot.frameIndex, time: snapshot.timestamp, frame: frame)
+                self.debugCaptureStore.writeFrameAnalysis(index: snapshot.frameIndex, time: snapshot.timestamp, frame: frame, algorithm: snapshot.effectiveAlgorithm)
             }
         }
     }

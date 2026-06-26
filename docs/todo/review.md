@@ -1,6 +1,6 @@
 # Review
 
-Last updated: 2026-06-26 11:45 KST
+Last updated: 2026-06-26 15:49 KST
 
 ## Scope
 
@@ -13,7 +13,7 @@ Last updated: 2026-06-26 11:45 KST
 - `docs/todo/viewpoint-auto-workflow.md`
 - 현재 코드/테스트/패키징 상태
 
-이번 작업은 리뷰가 목적이므로 코드는 수정하지 않았다. 명확한 불일치와 배포 전 리스크를 아래에 기록한다.
+이번 작업은 리뷰가 목적이지만, 확인된 저위험 오류는 `fix/temp` 브랜치에서 수정했다. 명확한 불일치와 배포 전 리스크를 아래에 기록한다.
 
 ## Executive Summary
 
@@ -34,13 +34,13 @@ Last updated: 2026-06-26 11:45 KST
 
 검증 결과: **타당함.**
 
-- `AVCaptureDepthDataOutput`은 Apple 문서상 compatible camera devices용이며 플랫폼 목록에 네이티브 macOS가 없다. iOS/iPadOS/Mac Catalyst/tvOS만 표시된다.  
+- `AVCaptureDepthDataOutput`은 Apple 문서상 compatible camera devices용이며 플랫폼 목록에 네이티브 macOS가 없다. iOS/iPadOS/Mac Catalyst/tvOS만 표시된다.
   Source: <https://developer.apple.com/documentation/avfoundation/avcapturedepthdataoutput>
-- ARKit도 네이티브 macOS 대상이 아니며 hardware sensing 전제다.  
+- ARKit도 네이티브 macOS 대상이 아니며 hardware sensing 전제다.
   Source: <https://developer.apple.com/documentation/arkit>
-- `VNGeneratePersonInstanceMaskRequest`는 macOS 14.0+로 확인된다.  
+- `VNGeneratePersonInstanceMaskRequest`는 macOS 14.0+로 확인된다.
   Source: <https://developer.apple.com/documentation/vision/vngeneratepersoninstancemaskrequest>
-- `VNCoreMLRequest`는 macOS 10.13+에서 Core ML image-analysis request로 쓰는 경로가 맞다.  
+- `VNCoreMLRequest`는 macOS 10.13+에서 Core ML image-analysis request로 쓰는 경로가 맞다.
   Source: <https://developer.apple.com/documentation/vision/vncoremlrequest/model>
 
 따라서 "MacBook 단일 RGB 웹캠에는 하드웨어 depth가 없고, 현실적인 경로는 Core ML monocular depth"라는 문서 결론은 적절하다.
@@ -49,7 +49,7 @@ Last updated: 2026-06-26 11:45 KST
 
 검증 결과: **타당하되 제품 신호로는 보수적 취급이 맞음.**
 
-Apple WWDC23 자료는 `VNDetectHumanBodyPose3DRequest`가 이미지에서 17개 3D joint skeleton을 반환하고, 3D joint position은 hip/root 기준 meter 좌표라고 설명한다. 또한 "without ARKit or ARSession"이라고 설명하므로, 단일 2D 이미지/프레임에서 Vision 3D 추정이 가능하다는 문서 결론은 맞다.  
+Apple WWDC23 자료는 `VNDetectHumanBodyPose3DRequest`가 이미지에서 17개 3D joint skeleton을 반환하고, 3D joint position은 hip/root 기준 meter 좌표라고 설명한다. 또한 "without ARKit or ARSession"이라고 설명하므로, 단일 2D 이미지/프레임에서 Vision 3D 추정이 가능하다는 문서 결론은 맞다.
 Source: <https://developer.apple.com/videos/play/wwdc2023/111241/>
 
 다만 이는 실제 metric 센서 측정이 아니라 Vision 추정값이다. 현재 코드가 3D를 보조 후보로 두고 baseline/quality gate를 요구하는 방향은 리서치와 맞다.
@@ -58,9 +58,9 @@ Source: <https://developer.apple.com/videos/play/wwdc2023/111241/>
 
 검증 결과: **타당함.**
 
-- Apple/Hugging Face `apple/coreml-depth-anything-v2-small`은 Apache-2.0, F16 49.8MB, M1 Max 32.80ms, M3 Max 24.58ms, dominant compute unit Neural Engine으로 표시된다.  
+- Apple/Hugging Face `apple/coreml-depth-anything-v2-small`은 Apache-2.0, F16 49.8MB, M1 Max 32.80ms, M3 Max 24.58ms, dominant compute unit Neural Engine으로 표시된다.
   Source: <https://huggingface.co/apple/coreml-depth-anything-v2-small>
-- Depth Anything V2 upstream은 Small 24.8M, Base 97.5M, Large 335.3M, Giant 1.3B coming soon으로 표시하고, Small은 Apache-2.0, Base/Large/Giant는 CC-BY-NC-4.0이라고 명시한다.  
+- Depth Anything V2 upstream은 Small 24.8M, Base 97.5M, Large 335.3M, Giant 1.3B coming soon으로 표시하고, Small은 Apache-2.0, Base/Large/Giant는 CC-BY-NC-4.0이라고 명시한다.
   Source: <https://github.com/DepthAnything/Depth-Anything-V2>
 
 따라서 제품 후보를 `DepthAnythingV2SmallF16.mlpackage` 하나로 고정한 것은 배포/라이선스/성능 관점에서 적절하다.
@@ -69,11 +69,11 @@ Source: <https://developer.apple.com/videos/play/wwdc2023/111241/>
 
 검증 결과: **제품 제외 결론은 타당. 단, 라이선스 설명은 더 정밀해야 함.**
 
-- Hugging Face `apple/DepthPro`의 LICENSE는 `Research Purposes` 전용이며 상업적 이용, 제품 개발, 상용 제품/서비스 사용을 제외한다고 명시한다.  
+- Hugging Face `apple/DepthPro`의 LICENSE는 `Research Purposes` 전용이며 상업적 이용, 제품 개발, 상용 제품/서비스 사용을 제외한다고 명시한다.
   Source: <https://huggingface.co/apple/DepthPro/blob/main/LICENSE>
-- `apple/DepthPro-hf` 모델 카드에는 상단 license tag가 `apple-amlr`, card 내부에는 `Apple-ASCL` 표기도 함께 보여 혼선이 있다.  
+- `apple/DepthPro-hf` 모델 카드에는 상단 license tag가 `apple-amlr`, card 내부에는 `Apple-ASCL` 표기도 함께 보여 혼선이 있다.
   Source: <https://huggingface.co/apple/DepthPro-hf>
-- GitHub `apple/ml-depth-pro`는 reference implementation과 model weights가 repo `LICENSE` terms라고 적고, 해당 GitHub LICENSE는 Apple sample-code 계열 문구다.  
+- GitHub `apple/ml-depth-pro`는 reference implementation과 model weights가 repo `LICENSE` terms라고 적고, 해당 GitHub LICENSE는 Apple sample-code 계열 문구다.
   Sources: <https://github.com/apple/ml-depth-pro>, <https://github.com/apple/ml-depth-pro/blob/main/LICENSE>
 
 정리: 문서의 "Depth Pro는 제품 후보에서 제외" 결론은 보수적으로 맞다. 다만 "Depth Pro 전체가 단일하게 apple-amlr research-only"라고만 쓰면 GitHub repo와 HF repo의 표기 차이를 설명하지 못한다. 리뷰 이후 문서 정리 시 "HF `apple/DepthPro` weights는 research-only이며, GitHub/HF 표기 차이가 있어 별도 Apple 허가/법무 확인 전 제품 제외"로 정밀화하는 편이 맞다.
@@ -82,9 +82,9 @@ Source: <https://developer.apple.com/videos/play/wwdc2023/111241/>
 
 검증 결과: **타당함.**
 
-- CVA cutoff는 연구마다 다르며 normal/FHP/severe 범위가 혼재한다고 최신 논문이 명시한다.  
+- CVA cutoff는 연구마다 다르며 normal/FHP/severe 범위가 혼재한다고 최신 논문이 명시한다.
   Source: <https://pmc.ncbi.nlm.nih.gov/articles/PMC11042887/>
-- JMIR 2024 e55476은 2D RGB 입력에서 3D pose estimation과 GCN으로 FHP를 학습할 수 있음을 보이지만, shoulder-angle 단독 분포가 겹쳐 구분이 어렵다는 Figure 설명을 제공한다.  
+- JMIR 2024 e55476은 2D RGB 입력에서 3D pose estimation과 GCN으로 FHP를 학습할 수 있음을 보이지만, shoulder-angle 단독 분포가 겹쳐 구분이 어렵다는 Figure 설명을 제공한다.
   Source: <https://formative.jmir.org/2024/1/e55476>
 
 따라서 "절대 임계 하나로 진단하지 말고, baseline 상대 신호와 보수적 noEval을 사용"한다는 리서치 방향은 적절하다.
@@ -99,9 +99,9 @@ Source: <https://developer.apple.com/videos/play/wwdc2023/111241/>
 - Hugging Face CLI/Python 의존성을 제품 런타임에 넣지 않는 결정도 맞다.
 - `codex exec --image`, `--oss`, `--local-provider ollama`는 현재 로컬 `codex exec --help`에서도 확인된다.
 - `codex -p`가 prompt가 아니라 profile 옵션이라는 주의도 현재 `codex-cli 0.142.2` 기준 맞다.
-- `claude -p/--print`는 현재 `claude 2.1.193` 및 공식 Claude Code CLI reference 기준 맞다.  
+- `claude -p/--print`는 현재 `claude 2.1.193` 및 공식 Claude Code CLI reference 기준 맞다.
   Source: <https://code.claude.com/docs/en/cli-reference>
-- `hf` CLI 설치/다운로드 경로는 Hugging Face 공식 문서와 맞다.  
+- `hf` CLI 설치/다운로드 경로는 Hugging Face 공식 문서와 맞다.
   Sources: <https://huggingface.co/docs/huggingface_hub/en/installation>, <https://huggingface.co/docs/huggingface_hub/en/guides/cli>
 
 문서의 stale 항목:
@@ -155,20 +155,22 @@ Source: <https://developer.apple.com/videos/play/wwdc2023/111241/>
    - 코드: `Settings` decode는 `debugSelectableMethods`를 허용한다. 즉 `profileGeometry`/`frontProxy`는 저장값으로 살아남을 수 있다.
    - 코드: 디버그 off에서는 `settings.postureAlgorithm`이 아니라 `routedAlgorithm`을 사용하며, 라우터는 측면/3-4를 `profileGeometry`로 선택한다.
 
-2. **디버그/진단에 effective algorithm이 명확히 기록되지 않는다.**
+2. **디버그/진단에 effective algorithm이 명확히 기록되지 않는다.** (수정됨)
 
-   - `DebugCaptureStore.writeFinalAnalysis`는 `algorithm: settings.postureAlgorithm`을 저장한다.
-   - 디버그 off에서는 artifact를 쓰지 않으므로 큰 문제는 아니지만, 자동 라우팅 검증을 하려면 `settings.postureAlgorithm`과 `effectiveAlgorithm`을 분리 기록하는 편이 낫다.
+   - 기존: `DebugCaptureStore.writeFinalAnalysis`는 `algorithm: settings.postureAlgorithm`을 저장했다.
+   - 수정: 각 `TimedFrame`에 실제 처리한 알고리즘을 저장하고, `PostureDiagnostic.algorithm`/debug frame JSON/final analysis JSON이 그 값을 기록한다.
+   - final analysis JSON에는 `configuredAlgorithm`도 함께 남겨 사용자 설정값과 실제 실행값을 분리했다.
 
-3. **라우팅 전환과 보정 baseline 요구 타이밍이 까다롭다.**
+3. **라우팅 전환과 보정 baseline 요구 타이밍이 까다롭다.** (불일치 수정, UX 확인 필요)
 
-   - `finishBurst`에서 frames를 처리한 뒤 `routeSelector.update(...)`로 `routedAlgorithm`을 갱신하고, 바로 `Calibrator.capture(... requiredAlgorithm: effectiveAlgorithm())`를 호출한다.
-   - 시점이 바뀐 첫 보정 burst에서 frames는 이전 effective algorithm으로 생성됐을 수 있는데, required baseline은 갱신된 algorithm 기준이 될 수 있다.
-   - 실제 사용에서는 "시점 변경 후 한두 번 check가 지나 라우팅이 안정된 뒤 재보정"하면 피할 수 있지만, UX상 바로 재보정하면 실패할 가능성이 있다.
+   - 기존: `finishBurst`에서 frames를 처리한 뒤 `routeSelector.update(...)`로 `routedAlgorithm`을 갱신하고, 바로 `Calibrator.capture(... requiredAlgorithm: effectiveAlgorithm())`를 호출했다.
+   - 문제: 시점이 바뀐 첫 보정 burst에서 frames는 이전 effective algorithm으로 생성됐는데, required baseline은 갱신된 algorithm 기준이 될 수 있었다.
+   - 수정: 각 `TimedFrame.algorithm`을 저장하고, 보정은 실제 프레임 처리에 사용된 알고리즘 기준으로 required baseline을 검사한다.
+   - 남은 확인: 시점 변경 직후 사용자가 기대하는 방식으로 재보정되는지는 live UX에서 확인해야 한다. 특히 측면/3-4 라우팅이 안정되기 전에는 이전 방식 기준으로 보정될 수 있다.
 
-4. **오래된 주석/문서가 남아 있다.**
+4. **오래된 문서 표기가 남아 있다.**
 
-   - `CameraManager` 주석은 "동일한 2초 버스트"라고 하지만 현재 `CameraBurstTiming.collectionSeconds = 3.0`, total `3.8`, finish `5.8`이다.
+   - `CameraManager`의 오래된 "동일한 2초 버스트" 주석은 `fix/temp`에서 수정했다.
    - `docs/todo/README.md`, `local-llm-ai-cli-plan.md`에는 `97 tests`가 남아 있다.
 
 5. **최신 debug run은 정상 동작 근거가 아니다.**
@@ -180,6 +182,23 @@ Source: <https://developer.apple.com/videos/play/wwdc2023/111241/>
 ## Verification Run
 
 실행한 검증:
+
+```bash
+scripts/run-tests.sh
+```
+
+결과:
+
+- `109 tests, 109 passed, 0 failed`
+
+```bash
+swift build --disable-sandbox
+```
+
+결과:
+
+- Swift package build passed
+- SwiftPM user cache/write warning과 missing `CLAUDE.md` exclude warning은 있었지만 실패는 아님.
 
 ```bash
 make check
@@ -206,11 +225,13 @@ make package
 
 ```bash
 git diff --check
+git diff --check origin/main
 ```
 
 결과:
 
-- 통과.
+- 최초 실행에서는 `docs/todo/review.md` trailing whitespace로 실패.
+- `fix/temp` 수정 후 둘 다 통과.
 
 번들 확인:
 

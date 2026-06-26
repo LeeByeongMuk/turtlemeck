@@ -4,11 +4,13 @@ public struct TimedFrame: Equatable, Sendable {
     public var time: Double
     public var frame: AnalyzedFrame
     public var index: Int?
+    public var algorithm: PostureAlgorithmID?
 
-    public init(time: Double, frame: AnalyzedFrame, index: Int? = nil) {
+    public init(time: Double, frame: AnalyzedFrame, index: Int? = nil, algorithm: PostureAlgorithmID? = nil) {
         self.time = time
         self.frame = frame
         self.index = index
+        self.algorithm = algorithm
     }
 }
 
